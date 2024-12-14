@@ -19,16 +19,21 @@ import { fetchUserFlights } from '../services/flightService';
 import { AuthContext } from '../contexts/AuthContext';
 
 const UserFlights = () => {
+  // AuthContext provides user authentication information
   const { user, loading: authLoading } = useContext(AuthContext);
-  const [flights, setFlights] = useState([]);
-  const [filteredFlights, setFilteredFlights] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+
+  // State variables for managing flights, filters, and UI feedback
+  const [flights, setFlights] = useState([]); // All flights
+  const [filteredFlights, setFilteredFlights] = useState([]); // Filtered flights to display
+  const [loading, setLoading] = useState(true); // Loading indicator
+  const [error, setError] = useState(null); // Error message
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success',
-  });
+  }); // Snackbar feedback
+
+  // State variables for filters
   const [sortOption, setSortOption] = useState('earliestDeparture');
   const [passengerNames, setPassengerNames] = useState([]);
   const [selectedPassenger, setSelectedPassenger] = useState('');
@@ -39,8 +44,9 @@ const UserFlights = () => {
   const [arrivalAirports, setArrivalAirports] = useState([]);
   const [selectedArrivalAirport, setSelectedArrivalAirport] = useState('');
   const [selectedDepartureDate, setSelectedDepartureDate] = useState('');
-  const [selectedArrivalDate, setSelectedArrivalDate] = useState(''); 
+  const [selectedArrivalDate, setSelectedArrivalDate] = useState('');
 
+  // Effect to load user flights when the component mounts
   useEffect(() => {
     const loadUserFlights = async () => {
       if (!user) {
@@ -50,21 +56,19 @@ const UserFlights = () => {
 
       setLoading(true);
       try {
+        // Fetch flights from the service
         const userFlights = await fetchUserFlights(user);
         setFlights(userFlights);
         setFilteredFlights(sortFlights(userFlights, 'earliestDeparture')); // Sort by default
 
-        const names = Array.from(new Set(userFlights.map((flight) => flight.passengerName)));
-        setPassengerNames(names);
+        // Sort flights by default sort option
+        setFilteredFlights(sortFlights(userFlights, 'earliestDeparture'));
 
-        const airlineList = Array.from(new Set(userFlights.map((flight) => flight.airline)));
-        setAirlines(airlineList);
-
-        const depAirports = Array.from(new Set(userFlights.map((flight) => flight.departureAirportCode)));
-        setDepartureAirports(depAirports);
-
-        const arrAirports = Array.from(new Set(userFlights.map((flight) => flight.arrivalAirportCode)));
-        setArrivalAirports(arrAirports);
+        // Extract unique filter options from flights
+        setPassengerNames(Array.from(new Set(userFlights.map((flight) => flight.passengerName))));
+        setAirlines(Array.from(new Set(userFlights.map((flight) => flight.airline))));
+        setDepartureAirports(Array.from(new Set(userFlights.map((flight) => flight.departureAirportCode))));
+        setArrivalAirports(Array.from(new Set(userFlights.map((flight) => flight.arrivalAirportCode))));
 
         setSnackbar({
           open: true,
@@ -86,6 +90,7 @@ const UserFlights = () => {
     loadUserFlights();
   }, [user]);
 
+  // Function to sort flights based on the selected option
   const sortFlights = (flights, option) => {
     return [...flights].sort((a, b) => {
       if (option === 'earliestDeparture') {
@@ -97,14 +102,23 @@ const UserFlights = () => {
       } else if (option === 'latestArrival') {
         return new Date(b.arrivalDate) - new Date(a.arrivalDate);
       } else if (option === 'shortestFlight') {
-        return new Date(a.arrivalDate) - new Date(a.departureDate) - (new Date(b.arrivalDate) - new Date(b.departureDate));
+        return (
+          new Date(a.arrivalDate) -
+          new Date(a.departureDate) -
+          (new Date(b.arrivalDate) - new Date(b.departureDate))
+        );
       } else if (option === 'longestFlight') {
-        return new Date(b.arrivalDate) - new Date(b.departureDate) - (new Date(a.arrivalDate) - new Date(a.departureDate));
+        return (
+          new Date(b.arrivalDate) -
+          new Date(b.departureDate) -
+          (new Date(a.arrivalDate) - new Date(a.departureDate))
+        );
       }
       return 0;
     });
   };
 
+  // Handlers for filter changes
   const handleSortChange = (event) => {
     const option = event.target.value;
     setSortOption(option);
@@ -140,40 +154,31 @@ const UserFlights = () => {
     setSelectedDepartureDate(date);
     applyFilters(sortOption, selectedPassenger, selectedAirline, selectedDepartureAirport, selectedArrivalAirport, date, selectedArrivalDate);
   };
-  
+
   const handleArrivalDateChange = (event) => {
     const date = event.target.value;
     setSelectedArrivalDate(date);
     applyFilters(sortOption, selectedPassenger, selectedAirline, selectedDepartureAirport, selectedArrivalAirport, selectedDepartureDate, date);
   };
 
+  // Apply all filters to the flights
   const applyFilters = (sortOption, passenger, airline, depAirport, arrAirport, depDate, arrDate) => {
     let result = sortFlights(flights, sortOption);
-    if (passenger) {
-      result = result.filter((flight) => flight.passengerName === passenger);
-    }
-    if (airline) {
-      result = result.filter((flight) => flight.airline === airline);
-    }
-    if (depAirport) {
-      result = result.filter((flight) => flight.departureAirportCode === depAirport);
-    }
-    if (arrAirport) {
-      result = result.filter((flight) => flight.arrivalAirportCode === arrAirport);
-    }
-    if (depDate) {
-      result = result.filter((flight) => new Date(flight.departureDate).toISOString().split('T')[0] === depDate);
-    }
-    if (arrDate) {
-      result = result.filter((flight) => new Date(flight.arrivalDate).toISOString().split('T')[0] === arrDate);
-    }
+    if (passenger) result = result.filter((flight) => flight.passengerName === passenger);
+    if (airline) result = result.filter((flight) => flight.airline === airline);
+    if (depAirport) result = result.filter((flight) => flight.departureAirportCode === depAirport);
+    if (arrAirport) result = result.filter((flight) => flight.arrivalAirportCode === arrAirport);
+    if (depDate) result = result.filter((flight) => new Date(flight.departureDate).toISOString().split('T')[0] === depDate);
+    if (arrDate) result = result.filter((flight) => new Date(flight.arrivalDate).toISOString().split('T')[0] === arrDate);
     setFilteredFlights(result);
   };
 
+  // Close the snackbar
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  // Render loading spinner while fetching data
   if (authLoading || loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
@@ -184,13 +189,15 @@ const UserFlights = () => {
 
   return (
     <Container maxWidth="md" sx={{ mt: 8, mb: 8 }}>
+      {/* Main Header */}
       <Typography variant="h4" gutterBottom>
         My Flights
       </Typography>
 
+      {/* Filters and Sorting */}
       {flights.length > 0 && (
         <Box sx={{ mb: 2 }}>
-          {/* Sort By dropdown */}
+          {/* Sort Options */}
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <FormControl sx={{ minWidth: 200 }}>
               <InputLabel id="sort-label">Sort By</InputLabel>
@@ -218,6 +225,7 @@ const UserFlights = () => {
             Filter By
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            {/* Passenger Filter */}
             <FormControl sx={{ minWidth: 200 }}>
               <InputLabel id="passenger-label">Passenger</InputLabel>
               <Select
@@ -313,6 +321,7 @@ const UserFlights = () => {
         </Box>
       )}
 
+      {/* Flight List */}
       {flights.length === 0 ? (
         // No flights at all
         <Typography variant="h6" color="textSecondary">
