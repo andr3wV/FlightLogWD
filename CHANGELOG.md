@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2024-12-14
+### Fixed
+
+### Added
+
+- Filtering in My Flights
+- Autocomplete on Flights page with Algolia
+- Deployment of [yanni-feature6](https://flight-log-wd.vercel.app/flights) and [andrew-feature6](https://flight-log-wd-andrew.vercel.app/flights) on separate links using Vercel
+
+### Changed
+
+- My Flights on Flights page to Upcoming Flights
+
+### Fixed
+
 ## [0.5.0] - 2024-11-05
 ### Added
 
